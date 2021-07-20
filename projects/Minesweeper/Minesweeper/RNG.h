@@ -1,6 +1,5 @@
 #pragma once
 #include <algorithm>
-#include <ctime>
 #include <iterator>
 #include <random>
 #include <vector>
@@ -8,13 +7,14 @@
 class RNG
 {
 private:
+	std::random_device m_rd{};
 	std::mt19937 m_mt{};
 
 public:
-	RNG() : m_mt{ static_cast<std::mt19937::result_type>(std::time(nullptr)) } {}
+	RNG() : m_rd{}, m_mt { m_rd() } {}
 
 	template <class INT_TYPE>
-	INT_TYPE GetInt(INT_TYPE min, INT_TYPE max) { return std::uniform_int<INT_TYPE>{ min, max }(m_mt); }
+	INT_TYPE GetInt(INT_TYPE min, INT_TYPE max) { return std::uniform_int_distribution<INT_TYPE>{ min, max }(m_mt); }
 
 	template <class T>
 	std::vector<T> SampleVector(std::vector<T>& vp, std::size_t numElements)
