@@ -35,13 +35,6 @@ public:
 		m_drawRect = D2D1::RectF(left, top, left + nWidth, top + nHeight);
 	}
 
-	bool IsMouseOnTile(LPARAM lParam) const
-	{
-		POINTS mousePosition = MAKEPOINTS(lParam);
-		return m_drawRect.left < mousePosition.x&& mousePosition.x < m_drawRect.right
-			&& m_drawRect.top < mousePosition.y&& mousePosition.y < m_drawRect.bottom;
-	}
-
 private:
 	TileState m_tileState{ TileState::HIDDEN };
 	TileContent m_tileContent{ TileContent::EMPTY };

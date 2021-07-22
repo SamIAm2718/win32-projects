@@ -203,6 +203,24 @@ std::vector<UINT> MinefieldWindow::GetTileGrid(UINT x, UINT y, INT radius)
 }
 
 /*
+*	Returns the (x,y) position in the tile grid given an
+*	lParam that represents the mouse position (From WinProc)
+*/
+
+POINT MinefieldWindow::MouseToTilePos(LPARAM lParam)
+{
+	POINTS mousePosition = MAKEPOINTS(lParam);
+	RECT rc;
+	GetClientRect(m_hWnd, &rc);
+	POINT pos;
+	pos.x = static_cast<LONG>((static_cast<DOUBLE>(mousePosition.x) - rc.left) / ((static_cast<DOUBLE>(rc.right) - rc.left) / m_width));
+	pos.y = static_cast<LONG>((static_cast<double>(mousePosition.y) - rc.top) / ((static_cast<DOUBLE>(rc.bottom) - rc.top) / m_height));
+	pos.x = min(max(pos.x, 0), m_width - 1);
+	pos.y = min(max(pos.y, 0), m_height - 1);
+	return pos;
+}
+
+/*
 *	Generate the Mine positions given that the the first
 *	clicked tile is at positon (x,y) in the minefield grid.
 */
@@ -342,15 +360,14 @@ LRESULT MinefieldWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 	if (!(IsGameLost() || IsGameWon()))
 	{
 		m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
+		POINT gridPos{ MouseToTilePos(lParam) };
+		m_lastGridPos = gridPos;
+		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
 
-		for (auto& tile : m_aMineTiles)
+		if (tile->GetTileState() == TileState::HIDDEN && tile->GetTileMark() != TileMark::FLAG)
 		{
-			if (tile.IsMouseOnTile(lParam)
-				&& tile.GetTileState() == TileState::HIDDEN && tile.GetTileMark() != TileMark::FLAG)
-			{
-				tile.SetTileState(TileState::CLICKED);
-				m_scene.Render();
-			}
+			tile->SetTileState(TileState::CLICKED);
+			m_scene.Render();
 		}
 	}
 
@@ -361,23 +378,19 @@ LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 {
 	if (!(IsGameLost() || IsGameWon()))
 	{
-		for (UINT x{ 0 }; x < m_width; ++x)
-		{
-			for (UINT y{ 0 }; y < m_height; ++y)
-			{
-				if ((*this)(x, y).IsMouseOnTile(lParam)
-					&& (*this)(x, y).GetTileState() == TileState::CLICKED)
-				{
-					if (m_cRevealedTiles == 0)
-					{
-						GenerateMines(x, y);
-						m_pGameWindow->StartTimer();
-					}
+		POINT gridPos{ MouseToTilePos(lParam) };
+		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
 
-					SetTileRevealed(x, y);
-					m_scene.Render();
-				}
+		if (tile->GetTileState() == TileState::CLICKED)
+		{
+			if (m_cRevealedTiles == 0)
+			{
+				GenerateMines(gridPos.x, gridPos.y);
+				m_pGameWindow->StartTimer();
 			}
+
+			SetTileRevealed(gridPos.x, gridPos.y);
+			m_scene.Render();
 		}
 
 		m_pGameWindow->SetSmileState(SmileState::SMILE);
@@ -402,35 +415,35 @@ LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 {
 	if (!(IsGameLost() || IsGameWon()))
 	{
-		for (auto& tile : m_aMineTiles)
-		{
-			if (tile.GetTileState() == TileState::HIDDEN && tile.IsMouseOnTile(lParam))
-			{
-				switch (tile.GetTileMark())
-				{
-				case TileMark::NONE:
-					++m_cFlaggedTiles;
-					tile.SetTileMark(TileMark::FLAG);
-					break;
-				case TileMark::FLAG:
-					--m_cFlaggedTiles;
-					if (m_bQuestionMarksEnabled)
-					{
-						tile.SetTileMark(TileMark::QUESTION_MARK);
-					}
-					else
-					{
-						tile.SetTileMark(TileMark::NONE);
-					}
-					break;
-				case TileMark::QUESTION_MARK:
-					tile.SetTileMark(TileMark::NONE);
-					break;
-				}
+		POINT gridPos{ MouseToTilePos(lParam) };
+		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
 
-				m_pGameWindow->SetFlagCounter(static_cast<INT32>(m_cMines) - m_cFlaggedTiles);
-				m_scene.Render();
+		if (tile->GetTileState() == TileState::HIDDEN)
+		{
+			switch (tile->GetTileMark())
+			{
+			case TileMark::NONE:
+				++m_cFlaggedTiles;
+				tile->SetTileMark(TileMark::FLAG);
+				break;
+			case TileMark::FLAG:
+				--m_cFlaggedTiles;
+				if (m_bQuestionMarksEnabled)
+				{
+					tile->SetTileMark(TileMark::QUESTION_MARK);
+				}
+				else
+				{
+					tile->SetTileMark(TileMark::NONE);
+				}
+				break;
+			case TileMark::QUESTION_MARK:
+				tile->SetTileMark(TileMark::NONE);
+				break;
 			}
+
+			m_pGameWindow->SetFlagCounter(static_cast<INT32>(m_cMines) - m_cFlaggedTiles);
+			m_scene.Render();
 		}
 	}
 
@@ -450,6 +463,19 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 		{
 			m_bMouseTracking = TRUE;
 		}
+
+		if (wParam & MK_LBUTTON)
+		{
+			POINT gridPos{ MouseToTilePos(lParam) };
+			m_lastGridPos = gridPos;
+			MineTile* tile = &(*this)(gridPos.x, gridPos.y);
+
+			if (tile->GetTileState() == TileState::HIDDEN && tile->GetTileMark() != TileMark::FLAG)
+			{
+				tile->SetTileState(TileState::CLICKED);
+				m_scene.Render();
+			}
+		}
 	}
 	else
 	{
@@ -459,19 +485,25 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 			{
 				m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
 
-				for (auto& tile : m_aMineTiles)
+				POINT gridPos{ MouseToTilePos(lParam) };
+
+				if (gridPos.x != m_lastGridPos.x || gridPos.y != m_lastGridPos.y)
 				{
-					if (tile.IsMouseOnTile(lParam)
-						&& tile.GetTileState() == TileState::HIDDEN && tile.GetTileMark() != TileMark::FLAG)
+					MineTile* prevTile = &(*this)(m_lastGridPos.x, m_lastGridPos.y);
+					MineTile* curTile = &(*this)(gridPos.x, gridPos.y);
+
+					if (prevTile->GetTileState() == TileState::CLICKED)
 					{
-						tile.SetTileState(TileState::CLICKED);
-						m_scene.Render();
+						prevTile->SetTileState(TileState::HIDDEN);
 					}
-					else if (!tile.IsMouseOnTile(lParam) && tile.GetTileState() == TileState::CLICKED)
+
+					if (curTile->GetTileState() == TileState::HIDDEN && curTile->GetTileMark() != TileMark::FLAG)
 					{
-						tile.SetTileState(TileState::HIDDEN);
-						m_scene.Render();
+						curTile->SetTileState(TileState::CLICKED);
 					}
+
+					m_scene.Render();
+					m_lastGridPos = gridPos;
 				}
 			}
 		}
@@ -485,14 +517,12 @@ LRESULT MinefieldWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 	if (!(IsGameLost() || IsGameWon()))
 	{
 		m_pGameWindow->SetSmileState(SmileState::SMILE);
+		MineTile* tile = &(*this)(m_lastGridPos.x, m_lastGridPos.y);
 
-		for (auto& tile : m_aMineTiles)
+		if (tile->GetTileState() == TileState::CLICKED)
 		{
-			if (tile.GetTileState() == TileState::CLICKED)
-			{
-				tile.SetTileState(TileState::HIDDEN);
-				m_scene.Render();
-			}
+			tile->SetTileState(TileState::HIDDEN);
+			m_scene.Render();
 		}
 	}
 

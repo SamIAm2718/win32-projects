@@ -42,6 +42,7 @@ private:
 	UINT m_cMines{ 0 };										// Count of mines to generate.
 	UINT m_cRevealedTiles{ 0 };								// Tracks number of tiles set to revealed.
 	UINT m_cFlaggedTiles{ 0 };								// Tracks number of tiles marked with flags.
+	POINT m_lastGridPos{};						// Tracks the previous position of the mouse on tile grid.
 	BOOL m_bMouseTracking{ FALSE };							// Tracks if mouse is being tracked.
 	BOOL m_bGameLost{ FALSE };								// Tracks if game is lost, i.e. a mine was revealed.
 	BOOL m_bQuestionMarksEnabled{ FALSE };					// Tracks if we can mark with question marks.
@@ -51,6 +52,7 @@ private:
 
 	UINT GetNumberAdjacentMines(UINT x, UINT y);
 	std::vector<UINT> GetTileGrid(UINT x, UINT y, INT radius);
+	POINT MouseToTilePos(LPARAM lParam);
 	void GenerateMines(UINT x, UINT y);
 	void GenerateNumbers();
 	void SetTileRevealed(UINT x, UINT y);
