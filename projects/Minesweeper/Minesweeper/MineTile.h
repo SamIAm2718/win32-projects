@@ -42,8 +42,7 @@ private:
 
 	/*
 	*	Stores rectangle that contains the tile position in
-	*	the Minefield window for both drawing purposes and
-	*	to determine if the mouse cursor is on the tile
+	*	the Minefield window for drawing purposes
 	*/
 	D2D1_RECT_F m_drawRect{ D2D1::RectF(0,0,0,0) };
 };

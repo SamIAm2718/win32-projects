@@ -214,7 +214,7 @@ POINT MinefieldWindow::MouseToTilePos(LPARAM lParam)
 	GetClientRect(m_hWnd, &rc);
 	POINT pos;
 	pos.x = static_cast<LONG>((static_cast<DOUBLE>(mousePosition.x) - rc.left) / ((static_cast<DOUBLE>(rc.right) - rc.left) / m_width));
-	pos.y = static_cast<LONG>((static_cast<double>(mousePosition.y) - rc.top) / ((static_cast<DOUBLE>(rc.bottom) - rc.top) / m_height));
+	pos.y = static_cast<LONG>((static_cast<DOUBLE>(mousePosition.y) - rc.top) / ((static_cast<DOUBLE>(rc.bottom) - rc.top) / m_height));
 	pos.x = min(max(pos.x, 0), m_width - 1);
 	pos.y = min(max(pos.y, 0), m_height - 1);
 	return pos;
