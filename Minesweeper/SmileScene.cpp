@@ -83,7 +83,7 @@ void SmileScene::CalculateLayout()
 	const D2D1_SIZE_F fSize{ m_pRenderTarget->GetSize() };
 
 	m_pEmojiFormat.Release();
-	HRESULT hr = m_pDWriteFactory->CreateTextFormat(L"Segoe UI Emoji", nullptr,
+	HRESULT hr = m_pDWriteFactory->CreateTextFormat(constants::FONT_EMOJI.data(), nullptr,
 		DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
 		0.6f * min(fSize.width, fSize.height),
 		L"en-US", &m_pEmojiFormat);
@@ -139,20 +139,20 @@ void SmileScene::RenderScene()
 		switch (m_smileState)
 		{
 		case SmileState::SMILE:
-			m_pRenderTarget->DrawText(constants::SMILE_CHAR.data(), static_cast<UINT>(constants::SMILE_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::EMOJI_SMILE.data(), static_cast<UINT>(constants::EMOJI_SMILE.size()),
 				m_pEmojiFormat, drawRect, m_pTextColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 			break;
 		case SmileState::SMILE_OPEN_MOUTH:
-			m_pRenderTarget->DrawText(constants::SMILE_OPEN_MOUTH_CHAR.data(), static_cast<UINT>(constants::SMILE_OPEN_MOUTH_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::EMOJI_SMILE_OPEN_MOUTH.data(), static_cast<UINT>(constants::EMOJI_SMILE_OPEN_MOUTH.size()),
 				m_pEmojiFormat, drawRect, m_pTextColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 			break;
 		case SmileState::SMILE_SUNGLASSES:
-			m_pRenderTarget->DrawText(constants::SMILE_SUNGLASSES_CHAR.data(), static_cast<UINT>(constants::SMILE_SUNGLASSES_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::EMOJI_SMILE_SUNGLASSES.data(), static_cast<UINT>(constants::EMOJI_SMILE_SUNGLASSES.size()),
 				m_pEmojiFormat, drawRect, m_pTextColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 			break;
 
 		case SmileState::SMILE_DEAD:
-			m_pRenderTarget->DrawText(constants::SMILE_DEAD_CHAR.data(), static_cast<UINT>(constants::SMILE_DEAD_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::EMOJI_SMILE_DEAD.data(), static_cast<UINT>(constants::EMOJI_SMILE_DEAD.size()),
 				m_pEmojiFormat, drawRect, m_pTextColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 			break;
 		}

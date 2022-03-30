@@ -160,7 +160,7 @@ void MinefieldScene::CalculateLayout()
 	}
 
 	m_pTextFormat.Release();
-	HRESULT hr = m_pDWriteFactory->CreateTextFormat(L"Cambria Math", nullptr,
+	HRESULT hr = m_pDWriteFactory->CreateTextFormat(constants::FONT_NUMBER.data(), nullptr,
 		DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
 		min(fSize.width / m_pMinefield->GetMinefieldWidth(), fSize.height / m_pMinefield->GetMinefieldHeight()),
 		L"en-US", &m_pTextFormat);
@@ -172,7 +172,7 @@ void MinefieldScene::CalculateLayout()
 	}
 
 	m_pEmojiFormat.Release();
-	hr = m_pDWriteFactory->CreateTextFormat(L"Segoe UI Emoji", nullptr,
+	hr = m_pDWriteFactory->CreateTextFormat(constants::FONT_EMOJI.data(), nullptr,
 		DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
 		0.6f * min(fSize.width / m_pMinefield->GetMinefieldWidth(), fSize.height / m_pMinefield->GetMinefieldHeight()),
 		L"en-US", &m_pEmojiFormat);
@@ -310,16 +310,16 @@ void MinefieldScene::DrawTileContents(const MineTile& tile)
 			case TileMark::NONE:
 				if (m_pMinefield->IsGameWon() && tile.GetTileContent() == TileContent::MINE)
 				{
-					m_pRenderTarget->DrawText(constants::FLAG_CHAR.data(), static_cast<UINT>(constants::FLAG_CHAR.size()),
+					m_pRenderTarget->DrawText(constants::EMOJI_FLAG.data(), static_cast<UINT>(constants::EMOJI_FLAG.size()),
 						m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 				}
 				break;
 			case::TileMark::FLAG:
-				m_pRenderTarget->DrawText(constants::FLAG_CHAR.data(), static_cast<UINT>(constants::FLAG_CHAR.size()),
+				m_pRenderTarget->DrawText(constants::EMOJI_FLAG.data(), static_cast<UINT>(constants::EMOJI_FLAG.size()),
 					m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 				break;
 			case TileMark::QUESTION_MARK:
-				m_pRenderTarget->DrawText(constants::QUESTION_MARK_CHAR.data(), static_cast<UINT>(constants::QUESTION_MARK_CHAR.size()),
+				m_pRenderTarget->DrawText(constants::CHAR_QUESTION_MARK.data(), static_cast<UINT>(constants::CHAR_QUESTION_MARK.size()),
 					m_pTextFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush);
 				break;
 			}
@@ -329,15 +329,15 @@ void MinefieldScene::DrawTileContents(const MineTile& tile)
 			switch (tile.GetTileMark())
 			{
 			case TileMark::NONE:
-				m_pRenderTarget->DrawText(constants::BOMB_CHAR.data(), static_cast<UINT>(constants::BOMB_CHAR.size()),
+				m_pRenderTarget->DrawText(constants::EMOJI_BOMB.data(), static_cast<UINT>(constants::EMOJI_BOMB.size()),
 					m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 				break;
 			case::TileMark::FLAG:
-				m_pRenderTarget->DrawText(constants::FLAG_CHAR.data(), static_cast<UINT>(constants::FLAG_CHAR.size()),
+				m_pRenderTarget->DrawText(constants::EMOJI_FLAG.data(), static_cast<UINT>(constants::EMOJI_FLAG.size()),
 					m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 				break;
 			case TileMark::QUESTION_MARK:
-				m_pRenderTarget->DrawText(constants::BOMB_CHAR.data(), static_cast<UINT>(constants::BOMB_CHAR.size()),
+				m_pRenderTarget->DrawText(constants::EMOJI_BOMB.data(), static_cast<UINT>(constants::EMOJI_BOMB.size()),
 					m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 				break;
 			}
@@ -349,7 +349,7 @@ void MinefieldScene::DrawTileContents(const MineTile& tile)
 			case TileMark::NONE:
 				break;
 			case::TileMark::FLAG:
-				m_pRenderTarget->DrawText(constants::BOMB_CHAR.data(), static_cast<UINT>(constants::BOMB_CHAR.size()),
+				m_pRenderTarget->DrawText(constants::EMOJI_BOMB.data(), static_cast<UINT>(constants::EMOJI_BOMB.size()),
 					m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 				m_pRenderTarget->DrawBitmap(m_pXMarkBitmap, tile.GetDrawRect());
 				break;
@@ -364,39 +364,39 @@ void MinefieldScene::DrawTileContents(const MineTile& tile)
 		switch (tile.GetTileContent())
 		{
 		case TileContent::ONE:
-			m_pRenderTarget->DrawText(constants::ONE_CHAR.data(), static_cast<UINT>(constants::ONE_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_ONE.data(), static_cast<UINT>(constants::CHAR_ONE.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pOneColorBrush);
 			break;
 		case TileContent::TWO:
-			m_pRenderTarget->DrawText(constants::TWO_CHAR.data(), static_cast<UINT>(constants::TWO_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_TWO.data(), static_cast<UINT>(constants::CHAR_TWO.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pTwoColorBrush);
 			break;
 		case TileContent::THREE:
-			m_pRenderTarget->DrawText(constants::THREE_CHAR.data(), static_cast<UINT>(constants::THREE_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_THREE.data(), static_cast<UINT>(constants::CHAR_THREE.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pThreeColorBrush);
 			break;
 		case TileContent::FOUR:
-			m_pRenderTarget->DrawText(constants::FOUR_CHAR.data(), static_cast<UINT>(constants::FOUR_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_FOUR.data(), static_cast<UINT>(constants::CHAR_FOUR.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pFourColorBrush);
 			break;
 		case TileContent::FIVE:
-			m_pRenderTarget->DrawText(constants::FIVE_CHAR.data(), static_cast<UINT>(constants::FIVE_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_FIVE.data(), static_cast<UINT>(constants::CHAR_FIVE.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pFiveColorBrush);
 			break;
 		case TileContent::SIX:
-			m_pRenderTarget->DrawText(constants::SIX_CHAR.data(), static_cast<UINT>(constants::SIX_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_SIX.data(), static_cast<UINT>(constants::CHAR_SIX.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pSixColorBrush);
 			break;
 		case TileContent::SEVEN:
-			m_pRenderTarget->DrawText(constants::SEVEN_CHAR.data(), static_cast<UINT>(constants::SEVEN_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_SEVEN.data(), static_cast<UINT>(constants::CHAR_SEVEN.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pSevenColorBrush);
 			break;
 		case TileContent::EIGHT:
-			m_pRenderTarget->DrawText(constants::EIGHT_CHAR.data(), static_cast<UINT>(constants::EIGHT_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::CHAR_EIGHT.data(), static_cast<UINT>(constants::CHAR_EIGHT.size()),
 				m_pTextFormat, tile.GetDrawRect(), m_pEightColorBrush);
 			break;
 		case TileContent::MINE:
-			m_pRenderTarget->DrawText(constants::BOMB_CHAR.data(), static_cast<UINT>(constants::BOMB_CHAR.size()),
+			m_pRenderTarget->DrawText(constants::EMOJI_BOMB.data(), static_cast<UINT>(constants::EMOJI_BOMB.size()),
 				m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 			break;
 		}

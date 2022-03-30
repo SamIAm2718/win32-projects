@@ -1,7 +1,7 @@
 #include "MinefieldWindow.h"
 
 #include <algorithm>
-#include <set>
+#include <queue>
 #include <vector>
 
 #include "constants.h"
@@ -320,30 +320,26 @@ void MinefieldWindow::SetTileRevealed(UINT x, UINT y)
 		}
 		else if ((*this)(x, y).GetTileContent() == TileContent::EMPTY)
 		{
-			std::vector<UINT> tilesToProcess{};
-			std::vector<UINT> newTilesToProcess{};
-			tilesToProcess.push_back(x + y * m_width);
+			std::queue<UINT> tilesToProcess{};
+			tilesToProcess.push(x + y * m_width);
 
 			while (tilesToProcess.size() != 0)
 			{
-				for (const UINT tileToProcess : tilesToProcess)
+				for (const UINT tile : GetTileGrid(tilesToProcess.front() % m_width, tilesToProcess.front() / m_width, 1))
 				{
-					for (const UINT tile : GetTileGrid(tileToProcess% m_width, tileToProcess / m_width, 1))
+					if ((*this)(tile).GetTileState() != TileState::REVEALED && (*this)(tile).GetTileMark() != TileMark::FLAG)
 					{
-						if ((*this)(tile).GetTileState() != TileState::REVEALED && (*this)(tile).GetTileMark() != TileMark::FLAG)
-						{
-							(*this)(tile).SetTileState(TileState::REVEALED);
-							++m_cRevealedTiles;
+						(*this)(tile).SetTileState(TileState::REVEALED);
+						++m_cRevealedTiles;
 
-							if ((*this)(tile).GetTileContent() == TileContent::EMPTY)
-							{
-								newTilesToProcess.push_back(tile);
-							}
+						if ((*this)(tile).GetTileContent() == TileContent::EMPTY)
+						{
+							tilesToProcess.push(tile);
 						}
 					}
 				}
 
-				tilesToProcess = std::move(newTilesToProcess);
+				tilesToProcess.pop();
 			}
 		}
 	}
