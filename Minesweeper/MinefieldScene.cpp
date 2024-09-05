@@ -1,4 +1,4 @@
-#include "MinefieldScene.h"
+﻿#include "MinefieldScene.h"
 
 #include <string>
 
@@ -396,6 +396,12 @@ void MinefieldScene::DrawTileContents(const MineTile& tile)
 				m_pTextFormat, tile.GetDrawRect(), m_pEightColorBrush);
 			break;
 		case TileContent::MINE:
+			int a[constants::EMOJI_BOMB.size()];
+			for (int i{ 0 }; i < constants::EMOJI_BOMB.size(); ++i)
+			{
+				a[i] = static_cast<int>(constants::EMOJI_BOMB.data()[i]);
+			}
+
 			m_pRenderTarget->DrawText(constants::EMOJI_BOMB.data(), static_cast<UINT>(constants::EMOJI_BOMB.size()),
 				m_pEmojiFormat, tile.GetDrawRect(), m_pQuestionMarkColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 			break;
