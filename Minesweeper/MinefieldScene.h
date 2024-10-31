@@ -17,9 +17,6 @@ public:
     void    CalculateLayout();
     void    RenderScene();
 
-    void    DrawTile(const MineTile& tile);
-    void    DrawTileContents(const MineTile& tile);
-
 private:
     MinefieldWindow* m_pMinefield{ nullptr };
 
@@ -28,8 +25,6 @@ private:
     CComPtr<ID2D1SolidColorBrush> m_pTileEdgeLightColorBrush{ nullptr };
     CComPtr<ID2D1SolidColorBrush> m_pTileEdgeDarkColorBrush{ nullptr };
     CComPtr<ID2D1SolidColorBrush> m_pTileEdgeDarkestColorBrush{ nullptr };
-
-    CComPtr<ID2D1Bitmap> m_pXMarkBitmap{ nullptr };
 
     CComPtr<ID2D1SolidColorBrush> m_pOneColorBrush{ nullptr };
     CComPtr<ID2D1SolidColorBrush> m_pTwoColorBrush{ nullptr };
@@ -43,4 +38,21 @@ private:
 
     CComPtr<IDWriteTextFormat> m_pTextFormat{ nullptr };
     CComPtr<IDWriteTextFormat> m_pEmojiFormat{ nullptr };
+
+    CComPtr<ID2D1Bitmap> m_pOneBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pTwoBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pThreeBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pFourBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pFiveBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pSixBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pSevenBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pEightBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pQuestionMarkBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pBombBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pFlagBitmap{ nullptr };
+    CComPtr<ID2D1Bitmap> m_pXMarkBitmap{ nullptr };
+
+    
+    void    DrawTile(const MineTile& tile);
+    void    DrawTileContents(const MineTile& tile);
 };
