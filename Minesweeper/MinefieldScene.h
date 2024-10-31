@@ -52,7 +52,8 @@ private:
     CComPtr<ID2D1Bitmap> m_pFlagBitmap{ nullptr };
     CComPtr<ID2D1Bitmap> m_pXMarkBitmap{ nullptr };
 
-    
+    HRESULT  CreateCharacterBitmap(const WCHAR* pChar, const UINT width, const UINT height, IDWriteTextFormat* pTextFormat, 
+        ID2D1Brush* pFillBrush, D2D1_DRAW_TEXT_OPTIONS drawTextOptions, ID2D1Bitmap** destBitmap);
     void    DrawTile(const MineTile& tile);
     void    DrawTileContents(const MineTile& tile);
 };

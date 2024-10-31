@@ -286,6 +286,48 @@ void MinefieldScene::RenderScene()
 	}
 }
 
+HRESULT MinefieldScene::CreateCharacterBitmap(const WCHAR* pChar, const UINT width, const UINT height, IDWriteTextFormat* pTextFormat, 
+	ID2D1Brush* pFillBrush, D2D1_DRAW_TEXT_OPTIONS drawTextOptions, ID2D1Bitmap** destBitmap)
+{
+	CComPtr<ID2D1BitmapRenderTarget> pCompatibleRenderTarget{ nullptr };
+	CComPtr<ID2D1Bitmap> pSourceBitmap{ nullptr };
+	const D2D1_POINT_2U destPoint{ D2D1::Point2U(0,0) };
+	const D2D1_RECT_U srcRect{ D2D1::RectU(0, 0, width, height) };
+	const D2D1_RECT_F drawRect{ D2D1::RectF(0, 0, width, height) };
+	const D2D1_SIZE_U destSize{ D2D1::SizeU(width, height) };
+	FLOAT dpiX{ 0.0f };
+	FLOAT dpiY{ 0.0f };
+
+	HRESULT hr = m_pRenderTarget->CreateCompatibleRenderTarget(D2D1::SizeF(width, height), &pCompatibleRenderTarget);
+
+	if (SUCCEEDED(hr))
+	{
+		pCompatibleRenderTarget->BeginDraw();
+		pCompatibleRenderTarget->Clear();
+		pCompatibleRenderTarget->DrawText(pChar, static_cast<UINT>(sizeof(TCHAR)), pTextFormat, drawRect, pFillBrush, drawTextOptions);
+		pCompatibleRenderTarget->EndDraw();
+
+		hr = pCompatibleRenderTarget->GetBitmap(&pSourceBitmap);
+
+		if (SUCCEEDED(hr))
+		{
+			pSourceBitmap->GetDpi(&dpiX, &dpiY);
+			hr = m_pRenderTarget->CreateBitmap(destSize, D2D1::BitmapProperties(pSourceBitmap->GetPixelFormat(), dpiX, dpiY), destBitmap);
+
+			if (SUCCEEDED(hr))
+			{
+				hr = (*destBitmap)->CopyFromBitmap(&destPoint, pSourceBitmap, &srcRect);
+			}
+
+			pSourceBitmap.Release();
+		}
+
+		pCompatibleRenderTarget.Release();
+	}
+
+	return hr;
+}
+
 void MinefieldScene::DrawTile(const MineTile& tile)
 {
 	ID2D1SolidColorBrush* pLeftEdgeColorBrush{ m_pTileEdgeLightColorBrush };

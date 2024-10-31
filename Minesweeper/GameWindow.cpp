@@ -9,7 +9,7 @@
 */
 
 GameWindow::GameWindow(UINT width, UINT height, UINT cMines) :
-	m_field{ width, height, cMines }, m_infobar{ cMines }
+	m_field{ width, height, cMines }, m_infobar{ static_cast<int>(cMines) }
 {
 	m_lpszClassName = std::make_unique<WCHAR[]>(constants::MAX_LOADSTRING);
 	LoadString(GetModuleHandle(nullptr), IDS_GAME_WINDOW_CLASS, m_lpszClassName.get(), constants::MAX_LOADSTRING);
