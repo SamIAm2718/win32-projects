@@ -159,7 +159,7 @@ UINT MinefieldWindow::GetNumberAdjacentMines(UINT x, UINT y)
 {
 	UINT cAdjacentMines{ 0 };
 
-	for (const auto tile : GetTileGrid(x, y, 1))
+	for (const auto tile : GetTileGrid(x, y, 1, TRUE))
 	{
 		if ((*this)(tile).GetTileContent() == TileContent::MINE)
 		{
@@ -172,28 +172,32 @@ UINT MinefieldWindow::GetNumberAdjacentMines(UINT x, UINT y)
 
 /*
 *	Returns a vector containing all tiles in a square grid
-*	centered at (x, y) with a given radius
+*	centered at (x, y) with a given radius.
+*	Guaranteed to be sorted, can excludeCenter
 */
-std::vector<UINT> MinefieldWindow::GetTileGrid(UINT x, UINT y, INT radius)
+std::vector<UINT> MinefieldWindow::GetTileGrid(UINT x, UINT y, INT radius, BOOL excludeCenter)
 {
 	std::vector<UINT> aAdjacentTiles{};
 
-	if (radius < 0)
+	if (radius < 0 || (excludeCenter && radius == 0))
 	{
 		return aAdjacentTiles;
 	}
 
-	aAdjacentTiles.reserve((1 + 2 * static_cast<std::size_t>(radius)) * (1 + 2 * static_cast<std::size_t>(radius)));
+	aAdjacentTiles.reserve((1 + 2 * static_cast<std::size_t>(radius)) * (1 + 2 * static_cast<std::size_t>(radius)) - (excludeCenter ? 0 : 1));
 
-	for (INT xOffset{ -radius }; xOffset <= radius; ++xOffset)
+	for (INT yOffset{ -radius }; yOffset <= radius; ++yOffset)
 	{
-		if (0 <= x + xOffset && x + xOffset < m_width)
+		if (0 <= y + yOffset && y + yOffset < m_height)
 		{
-			for (INT yOffset{ -radius }; yOffset <= radius; ++yOffset)
+			for (INT xOffset{ -radius }; xOffset <= radius; ++xOffset)
 			{
-				if (0 <= y + yOffset && y + yOffset < m_height)
+				if (0 <= x + xOffset && x + xOffset < m_width)
 				{
-					aAdjacentTiles.push_back((x + xOffset) + (y + yOffset) * m_width);
+					if (!(excludeCenter && xOffset == 0 && yOffset == 0))
+					{
+						aAdjacentTiles.push_back((x + xOffset) + (y + yOffset) * m_width);
+					}
 				}
 			}
 		}
@@ -226,8 +230,7 @@ POINT MinefieldWindow::MouseToTilePos(LPARAM lParam)
 */
 void MinefieldWindow::GenerateMines(UINT x, UINT y)
 {
-	std::vector<UINT> excludedTiles{ GetTileGrid(x, y, (m_cTiles - m_cMines < 9 ? 0 : 1)) };
-	std::sort(excludedTiles.begin(), excludedTiles.end());
+	std::vector<UINT> excludedTiles{ GetTileGrid(x, y, (m_cTiles - m_cMines < 9 ? 0 : 1), FALSE) };
 
 	std::vector<MineTile*> tilesToToggle{};
 	tilesToToggle.reserve(m_aMineTiles.size());
@@ -325,7 +328,7 @@ void MinefieldWindow::SetTileRevealed(UINT x, UINT y)
 
 			while (tilesToProcess.size() != 0)
 			{
-				for (const UINT tile : GetTileGrid(tilesToProcess.front() % m_width, tilesToProcess.front() / m_width, 1))
+				for (const UINT tile : GetTileGrid(tilesToProcess.front() % m_width, tilesToProcess.front() / m_width, 1, TRUE))
 				{
 					if ((*this)(tile).GetTileState() != TileState::REVEALED && (*this)(tile).GetTileMark() != TileMark::FLAG)
 					{
@@ -343,6 +346,68 @@ void MinefieldWindow::SetTileRevealed(UINT x, UINT y)
 			}
 		}
 	}
+}
+
+void MinefieldWindow::BeginChord(UINT x, UINT y)
+{
+	std::vector<UINT> surroundingTiles{ GetTileGrid(x, y, 1, TRUE) };
+
+	for (UINT neighborTile : surroundingTiles)
+	{
+		if ((*this)(neighborTile).GetTileState() == TileState::HIDDEN && (*this)(neighborTile).GetTileMark() != TileMark::FLAG)
+		{
+			(*this)(neighborTile).SetTileState(TileState::CLICKED);
+		}
+
+		m_bChording = true;
+	}
+}
+
+void MinefieldWindow::EndChord(UINT x, UINT y)
+{
+	if ((*this)(x,y).GetTileState() == TileState::REVEALED)
+	{
+		std::vector<UINT> surroundingTiles{ GetTileGrid(x, y, 1, TRUE) };
+		UINT cFlags{ 0 };
+
+		for (UINT neighborTile : surroundingTiles)
+		{
+			if ((*this)(neighborTile).GetTileMark() == TileMark::FLAG)
+			{
+				++cFlags;
+			}
+		}
+
+		if (cFlags == GetNumberAdjacentMines(x, y))
+		{
+			for (UINT neighborTile : surroundingTiles)
+			{
+				SetTileRevealed(neighborTile % m_width, neighborTile / m_height);
+			}
+		}
+		else
+		{
+			for (UINT neighborTile : surroundingTiles)
+			{
+				if ((*this)(neighborTile).GetTileState() == TileState::CLICKED)
+				{
+					(*this)(neighborTile).SetTileState(TileState::HIDDEN);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (UINT neighborTile : GetTileGrid(x, y, 1, TRUE))
+		{
+			if ((*this)(neighborTile).GetTileState() == TileState::CLICKED)
+			{
+				(*this)(neighborTile).SetTileState(TileState::HIDDEN);
+			}
+		}
+	}
+
+	m_bChording = false;
 }
 
 /*
@@ -365,6 +430,12 @@ LRESULT MinefieldWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 			tile->SetTileState(TileState::CLICKED);
 			m_scene.Render();
 		}
+
+		if (wParam & MK_RBUTTON)
+		{
+			BeginChord(gridPos.x, gridPos.y);
+			m_scene.Render();
+		}
 	}
 
 	return 0;
@@ -376,6 +447,12 @@ LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 	{
 		POINT gridPos{ MouseToTilePos(lParam) };
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
+		
+		if (m_bChording) 
+		{
+			EndChord(gridPos.x, gridPos.y);
+			m_scene.Render();
+		}
 
 		if (tile->GetTileState() == TileState::CLICKED)
 		{
@@ -414,7 +491,12 @@ LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 		POINT gridPos{ MouseToTilePos(lParam) };
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
 
-		if (tile->GetTileState() == TileState::HIDDEN)
+		if (wParam & MK_LBUTTON)
+		{
+			BeginChord(gridPos.x, gridPos.y);
+			m_scene.Render();
+		}
+		else if (tile->GetTileState() == TileState::HIDDEN)
 		{
 			switch (tile->GetTileMark())
 			{
@@ -439,6 +521,23 @@ LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 			}
 
 			m_pGameWindow->SetFlagCounter(static_cast<INT32>(m_cMines) - m_cFlaggedTiles);
+			m_scene.Render();
+		}
+	}
+
+	return 0;
+}
+
+LRESULT MinefieldWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam)
+{
+	if (!(IsGameLost() || IsGameWon()))
+	{
+		POINT gridPos{ MouseToTilePos(lParam) };
+		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
+
+		if (m_bChording)
+		{
+			EndChord(gridPos.x, gridPos.y);
 			m_scene.Render();
 		}
 	}
@@ -587,6 +686,9 @@ LRESULT MinefieldWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_RBUTTONDOWN:
 		return OnRButtonDown(wParam, lParam);
+
+	case WM_RBUTTONUP:
+		return OnRButtonUp(wParam, lParam);
 
 	case WM_MOUSEMOVE:
 		return OnMouseMove(wParam, lParam);
