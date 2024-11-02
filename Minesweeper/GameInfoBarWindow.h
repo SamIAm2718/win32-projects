@@ -18,12 +18,15 @@ public:
 	RECT FlagCounterBoundingBox();
 	RECT TimerBoundingBox();
 	RECT SmileBoundingBox();
+	BOOL IsDebugEnabled();
 	void ResetGame();
 	void SetFlagCounter(INT32 count);
 	void StartTimer();
 	void StopTimer();
 	void ResetTimer();
+	void ToggleDebug();
 	void SetSmileState(SmileState state);
+	void SetCurrentTileContent(TileContent content);
 
 private:
 	std::unique_ptr<WCHAR[]> m_lpszClassName{ nullptr };

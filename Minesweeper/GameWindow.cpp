@@ -63,6 +63,11 @@ void GameWindow::SetSmileState(SmileState state)
 	m_infobar.SetSmileState(state);
 }
 
+void GameWindow::SetCurrentTileContents(TileContent content)
+{
+	m_infobar.SetCurrentTileContent(content);
+}
+
 DOUBLE GameWindow::GetTileSize()
 {
 	return m_dTileSize;
@@ -162,6 +167,23 @@ LRESULT GameWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (MessageBox(m_hWnd, L"Are you sure you want to reset the game?", L"Reset Game", MB_YESNO) == IDYES)
 			{
 				m_field.ResetGame();
+			}
+		}
+		case ID_ACCELERATOR_DEBUG:
+		{
+			if (m_infobar.IsDebugEnabled())
+			{
+				if (MessageBox(m_hWnd, L"Would you like to disable Debug Mode?", L"Debug Mode", MB_YESNO) == IDYES)
+				{
+					m_infobar.ToggleDebug();
+				}
+			}
+			else
+			{
+				if (MessageBox(m_hWnd, L"Would you like to enable Debug Mode?", L"Debug Mode", MB_YESNO) == IDYES)
+				{
+					m_infobar.ToggleDebug();
+				}
 			}
 		}
 		break;

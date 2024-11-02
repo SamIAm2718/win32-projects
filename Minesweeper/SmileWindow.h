@@ -12,6 +12,10 @@ public:
 	SmileWindow();
 
 	void SetSmileState(SmileState state);
+	void SetCurrentTileContent(TileContent content);
+	void ToggleDebug();
+	void ResetGame();
+	BOOL IsDebugEnabled();
 	BOOL isClicked();
 
 private:

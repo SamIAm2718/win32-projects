@@ -19,6 +19,7 @@ namespace colors
 	inline constexpr unsigned int tileBackground{ 0xC0C0C0FF };
 	inline constexpr unsigned int tileBackgroundMineReveal{ 0xFF0000FF };
 	inline constexpr unsigned int tileBackgroundMineGameWin{ 0x008000FF };
+	inline constexpr unsigned int tileBackgroundCheatsUsed{ 0x000080FF };
 
 	// Alpha masks for tile edge colors
 	inline constexpr unsigned int tileEdgeLightest{ 0xFFFFFF87 };

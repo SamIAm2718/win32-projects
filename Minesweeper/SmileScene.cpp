@@ -44,6 +44,8 @@ void SmileScene::DiscardDeviceIndependentResources()
 
 HRESULT SmileScene::CreateDeviceDependentResources()
 {
+	const D2D1_SIZE_F fSize{ m_pRenderTarget->GetSize() };
+
 	HRESULT	hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(RGBA(colors::tileEdgeLightest)), &m_pTileEdgeLightestColorBrush);
 
 	if (SUCCEEDED(hr))
@@ -66,6 +68,20 @@ HRESULT SmileScene::CreateDeviceDependentResources()
 		hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(RGBA(colors::tileBackground)), &m_pTextColorBrush);
 	}
 
+	if (SUCCEEDED(hr)) 
+	{
+		hr = m_pDWriteFactory->CreateTextFormat(constants::FONT_EMOJI.data(), nullptr,
+			DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+			0.6f * min(fSize.width, fSize.height),
+			L"en-US", &m_pEmojiFormat);
+
+		if (SUCCEEDED(hr))
+		{
+			m_pEmojiFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+			m_pEmojiFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+		}
+	}
+
 	return hr;
 }
 
@@ -76,28 +92,37 @@ void SmileScene::DiscardDeviceDependentResources()
 	m_pTileEdgeDarkColorBrush.Release();
 	m_pTileEdgeDarkestColorBrush.Release();
 	m_pTextColorBrush.Release();
-}
-
-void SmileScene::CalculateLayout()
-{
-	const D2D1_SIZE_F fSize{ m_pRenderTarget->GetSize() };
-
 	m_pEmojiFormat.Release();
-	HRESULT hr = m_pDWriteFactory->CreateTextFormat(constants::FONT_EMOJI.data(), nullptr,
-		DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-		0.6f * min(fSize.width, fSize.height),
-		L"en-US", &m_pEmojiFormat);
-
-	if (SUCCEEDED(hr))
-	{
-		m_pEmojiFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-		m_pEmojiFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-	}
 }
+
+void SmileScene::CalculateLayout() {}
 
 void SmileScene::RenderScene()
 {
-	m_pRenderTarget->Clear(D2D1::ColorF(RGBA(colors::tileBackground)));
+	if (m_bDebugEnabled)
+	{
+		m_bCheatsUsed = true;
+
+		if (m_curTileContent == TileContent::MINE)
+		{
+			m_pRenderTarget->Clear(D2D1::ColorF(RGBA(colors::tileBackgroundMineReveal)));
+		}
+		else
+		{
+			m_pRenderTarget->Clear(D2D1::ColorF(RGBA(colors::tileBackgroundMineGameWin)));
+		}
+	}
+	else
+	{
+		if (m_bCheatsUsed)
+		{
+			m_pRenderTarget->Clear(D2D1::ColorF(RGBA(colors::tileBackgroundCheatsUsed)));
+		}
+		else 
+		{
+			m_pRenderTarget->Clear(D2D1::ColorF(RGBA(colors::tileBackground)));
+		}
+	}
 
 	ID2D1SolidColorBrush* pLeftEdgeColorBrush{ m_pTileEdgeLightColorBrush };
 	ID2D1SolidColorBrush* pTopEdgeColorBrush{ m_pTileEdgeLightestColorBrush };
@@ -164,6 +189,11 @@ BOOL SmileScene::IsClicked()
 	return m_bClicked;
 }
 
+BOOL SmileScene::IsDebugEnabled()
+{
+	return m_bDebugEnabled;
+}
+
 void SmileScene::SetClicked()
 {
 	m_bClicked = TRUE;
@@ -174,7 +204,22 @@ void SmileScene::UnsetClicked()
 	m_bClicked = FALSE;
 }
 
+void SmileScene::ToggleDebug()
+{
+	m_bDebugEnabled = !m_bDebugEnabled;
+}
+
+void SmileScene::ResetGame()
+{
+	m_bCheatsUsed = m_bDebugEnabled;
+}
+
 void SmileScene::SetSmileState(SmileState state)
 {
 	m_smileState = state;
+}
+
+void SmileScene::SetCurrentTileContent(TileContent content)
+{
+	m_curTileContent = content;
 }

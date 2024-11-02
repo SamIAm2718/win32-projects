@@ -22,6 +22,7 @@ public:
 	void StopTimer();
 	void ResetTimer();
 	void SetSmileState(SmileState state);
+	void SetCurrentTileContents(TileContent content);
 
 	DOUBLE GetTileSize();
 	RECT MinefieldBoundingBox();

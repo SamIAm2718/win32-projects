@@ -76,7 +76,7 @@
       <Filter>Source Files\GameWindow</Filter>
     </ClCompile>
     <ClCompile Include="GameWindow.cpp">
-      <Filter>Source Files\MinefieldWindow</Filter>
+      <Filter>Source Files\GameWindow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -21,9 +21,35 @@ void SmileWindow::SetSmileState(SmileState state)
 	m_scene.Render();
 }
 
+void SmileWindow::SetCurrentTileContent(TileContent content)
+{
+	m_scene.SetCurrentTileContent(content);
+
+	if (IsDebugEnabled())
+	{
+		m_scene.Render();
+	}
+}
+
+void SmileWindow::ToggleDebug()
+{
+	m_scene.ToggleDebug();
+	m_scene.Render();
+}
+
+void SmileWindow::ResetGame()
+{
+	m_scene.ResetGame();
+}
+
 BOOL SmileWindow::isClicked()
 {
 	return m_scene.IsClicked();
+}
+
+BOOL SmileWindow::IsDebugEnabled()
+{
+	return m_scene.IsDebugEnabled();
 }
 
 /*

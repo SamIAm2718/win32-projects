@@ -67,9 +67,15 @@ RECT GameInfoBarWindow::SmileBoundingBox()
 	return rc;
 }
 
+BOOL GameInfoBarWindow::IsDebugEnabled()
+{
+	return m_smile.IsDebugEnabled();
+}
+
 void GameInfoBarWindow::ResetGame()
 {
 	m_pGameWindow->ResetGame();
+	m_smile.ResetGame();
 }
 
 void GameInfoBarWindow::SetFlagCounter(INT32 count) 
@@ -79,7 +85,7 @@ void GameInfoBarWindow::SetFlagCounter(INT32 count)
 
 void GameInfoBarWindow::StartTimer() 
 {
-	m_bTimerRunning = TRUE; 
+	m_bTimerRunning = TRUE;
 }
 
 void GameInfoBarWindow::StopTimer() 
@@ -93,9 +99,19 @@ void GameInfoBarWindow::ResetTimer()
 	m_timerCounter.SetCounter(0);
 }
 
+void GameInfoBarWindow::ToggleDebug()
+{
+	m_smile.ToggleDebug();
+}
+
 void GameInfoBarWindow::SetSmileState(SmileState state)
 {
 	m_smile.SetSmileState(state);
+}
+
+void GameInfoBarWindow::SetCurrentTileContent(TileContent content)
+{
+	m_smile.SetCurrentTileContent(content);
 }
 
 /*
@@ -165,7 +181,9 @@ LRESULT GameInfoBarWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam
 
 	case WM_TIMER:
 		if (m_bTimerRunning)
+		{
 			m_timerCounter.SetCounter(++m_iElapsedTime);
+		}
 		return 0;
 
 	case WM_SIZE:

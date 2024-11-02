@@ -583,10 +583,11 @@ LRESULT MinefieldWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 {
+	POINT gridPos{ MouseToTilePos(lParam) };
+
 	if (!m_bMouseTracking)
 	{
 		TRACKMOUSEEVENT tme;
-		POINT gridPos{ MouseToTilePos(lParam) };
 
 		tme.cbSize = sizeof(TRACKMOUSEEVENT);
 		tme.dwFlags = TME_LEAVE;
@@ -623,8 +624,6 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 	{
 		if (IsGameActive())
 		{
-			POINT gridPos{ MouseToTilePos(lParam) };
-
 			if (wParam & MK_LBUTTON)
 			{
 				m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
@@ -642,6 +641,8 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 			m_lastGridPos = gridPos;
 		}
 	}
+
+	m_pGameWindow->SetCurrentTileContents((*this)(gridPos.x, gridPos.y).GetTileContent());
 
 	return 0;
 }
@@ -664,6 +665,7 @@ LRESULT MinefieldWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 	}
 
 	m_bMouseTracking = FALSE;
+	m_pGameWindow->SetCurrentTileContents(TileContent::EMPTY);
 
 	return 0;
 }
