@@ -169,6 +169,8 @@ LRESULT GameWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				m_field.ResetGame();
 			}
 		}
+		break;
+
 		case ID_ACCELERATOR_DEBUG:
 		{
 			if (m_infobar.IsDebugEnabled())

@@ -387,7 +387,7 @@ void MinefieldWindow::EndChord(UINT x, UINT y)
 		{
 			for (UINT tile : GetTileGrid(x, y, 1))
 			{
-				SetTileRevealed(tile % m_width, tile / m_height);
+				SetTileRevealed(tile % m_width, tile / m_width);
 			}
 		}
 		else

@@ -44,8 +44,6 @@ void SmileScene::DiscardDeviceIndependentResources()
 
 HRESULT SmileScene::CreateDeviceDependentResources()
 {
-	const D2D1_SIZE_F fSize{ m_pRenderTarget->GetSize() };
-
 	HRESULT	hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(RGBA(colors::tileEdgeLightest)), &m_pTileEdgeLightestColorBrush);
 
 	if (SUCCEEDED(hr))
@@ -68,20 +66,6 @@ HRESULT SmileScene::CreateDeviceDependentResources()
 		hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(RGBA(colors::tileBackground)), &m_pTextColorBrush);
 	}
 
-	if (SUCCEEDED(hr)) 
-	{
-		hr = m_pDWriteFactory->CreateTextFormat(constants::FONT_EMOJI.data(), nullptr,
-			DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-			0.6f * min(fSize.width, fSize.height),
-			L"en-US", &m_pEmojiFormat);
-
-		if (SUCCEEDED(hr))
-		{
-			m_pEmojiFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-			m_pEmojiFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-		}
-	}
-
 	return hr;
 }
 
@@ -95,7 +79,22 @@ void SmileScene::DiscardDeviceDependentResources()
 	m_pEmojiFormat.Release();
 }
 
-void SmileScene::CalculateLayout() {}
+void SmileScene::CalculateLayout() 
+{
+	const D2D1_SIZE_F fSize{ m_pRenderTarget->GetSize() };
+
+	m_pEmojiFormat.Release();
+	HRESULT hr = m_pDWriteFactory->CreateTextFormat(constants::FONT_EMOJI.data(), nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+		0.6f * min(fSize.width, fSize.height),
+		L"en-US", &m_pEmojiFormat);
+
+	if (SUCCEEDED(hr))
+	{
+		m_pEmojiFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+		m_pEmojiFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+	}
+}
 
 void SmileScene::RenderScene()
 {

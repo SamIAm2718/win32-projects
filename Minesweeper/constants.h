@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <stddef.h>
 
 #include <string_view>
@@ -42,10 +42,10 @@ namespace constants
 	inline constexpr std::wstring_view CHAR_SEVEN{ L"7" };
 	inline constexpr std::wstring_view CHAR_EIGHT{ L"8" };
 
-	inline constexpr std::wstring_view EMOJI_BOMB{ L"\U0001f4a3" };
-	inline constexpr std::wstring_view EMOJI_FLAG{ L"\U0001f6a9" };
-	inline constexpr std::wstring_view EMOJI_SMILE{ L"\U0001f642" };
-	inline constexpr std::wstring_view EMOJI_SMILE_OPEN_MOUTH{ L"\U0001f62e" };
-	inline constexpr std::wstring_view EMOJI_SMILE_SUNGLASSES{ L"\U0001f60e" };
-	inline constexpr std::wstring_view EMOJI_SMILE_DEAD{ L"\U0001f480" };
+	inline constexpr std::wstring_view EMOJI_BOMB{ L"💣" };
+	inline constexpr std::wstring_view EMOJI_FLAG{ L"🚩" };
+	inline constexpr std::wstring_view EMOJI_SMILE{ L"🙂" };
+	inline constexpr std::wstring_view EMOJI_SMILE_OPEN_MOUTH{ L"😮" };
+	inline constexpr std::wstring_view EMOJI_SMILE_SUNGLASSES{ L"😎" };
+	inline constexpr std::wstring_view EMOJI_SMILE_DEAD{ L"💀" };
 }
