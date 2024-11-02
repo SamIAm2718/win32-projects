@@ -72,6 +72,11 @@ BOOL MinefieldWindow::IsGameWon() const
 	return !m_bGameLost && ((m_cTiles <= m_cMines + m_cRevealedTiles) && (m_cRevealedTiles > 0));
 }
 
+BOOL MinefieldWindow::IsGameActive() const
+{
+	return !(IsGameLost() || IsGameWon());
+}
+
 BOOL MinefieldWindow::Resize(UINT width, UINT height, UINT cMines)
 {
 	if (m_width != width || m_height != height || m_cMines != cMines)
@@ -159,7 +164,7 @@ UINT MinefieldWindow::GetNumberAdjacentMines(UINT x, UINT y)
 {
 	UINT cAdjacentMines{ 0 };
 
-	for (const auto tile : GetTileGrid(x, y, 1, TRUE))
+	for (const auto tile : GetTileGrid(x, y, 1))
 	{
 		if ((*this)(tile).GetTileContent() == TileContent::MINE)
 		{
@@ -175,16 +180,16 @@ UINT MinefieldWindow::GetNumberAdjacentMines(UINT x, UINT y)
 *	centered at (x, y) with a given radius.
 *	Guaranteed to be sorted, can excludeCenter
 */
-std::vector<UINT> MinefieldWindow::GetTileGrid(UINT x, UINT y, INT radius, BOOL excludeCenter)
+std::vector<UINT> MinefieldWindow::GetTileGrid(UINT x, UINT y, INT radius)
 {
 	std::vector<UINT> aAdjacentTiles{};
 
-	if (radius < 0 || (excludeCenter && radius == 0))
+	if (radius < 0)
 	{
 		return aAdjacentTiles;
 	}
 
-	aAdjacentTiles.reserve((1 + 2 * static_cast<std::size_t>(radius)) * (1 + 2 * static_cast<std::size_t>(radius)) - (excludeCenter ? 0 : 1));
+	aAdjacentTiles.reserve((1 + 2 * static_cast<std::size_t>(radius)) * (1 + 2 * static_cast<std::size_t>(radius)));
 
 	for (INT yOffset{ -radius }; yOffset <= radius; ++yOffset)
 	{
@@ -194,10 +199,7 @@ std::vector<UINT> MinefieldWindow::GetTileGrid(UINT x, UINT y, INT radius, BOOL 
 			{
 				if (0 <= x + xOffset && x + xOffset < m_width)
 				{
-					if (!(excludeCenter && xOffset == 0 && yOffset == 0))
-					{
-						aAdjacentTiles.push_back((x + xOffset) + (y + yOffset) * m_width);
-					}
+					aAdjacentTiles.push_back((x + xOffset) + (y + yOffset) * m_width);
 				}
 			}
 		}
@@ -230,7 +232,7 @@ POINT MinefieldWindow::MouseToTilePos(LPARAM lParam)
 */
 void MinefieldWindow::GenerateMines(UINT x, UINT y)
 {
-	std::vector<UINT> excludedTiles{ GetTileGrid(x, y, (m_cTiles - m_cMines < 9 ? 0 : 1), FALSE) };
+	std::vector<UINT> excludedTiles{ GetTileGrid(x, y, (m_cTiles - m_cMines < 9 ? 0 : 1)) };
 
 	std::vector<MineTile*> tilesToToggle{};
 	tilesToToggle.reserve(m_aMineTiles.size());
@@ -328,7 +330,7 @@ void MinefieldWindow::SetTileRevealed(UINT x, UINT y)
 
 			while (tilesToProcess.size() != 0)
 			{
-				for (const UINT tile : GetTileGrid(tilesToProcess.front() % m_width, tilesToProcess.front() / m_width, 1, TRUE))
+				for (const UINT tile : GetTileGrid(tilesToProcess.front() % m_width, tilesToProcess.front() / m_width, 1))
 				{
 					if ((*this)(tile).GetTileState() != TileState::REVEALED && (*this)(tile).GetTileMark() != TileMark::FLAG)
 					{
@@ -348,31 +350,34 @@ void MinefieldWindow::SetTileRevealed(UINT x, UINT y)
 	}
 }
 
+// Handles beginning to chord at a position (x,y) on the minefield.
 void MinefieldWindow::BeginChord(UINT x, UINT y)
 {
-	std::vector<UINT> surroundingTiles{ GetTileGrid(x, y, 1, TRUE) };
-
-	for (UINT neighborTile : surroundingTiles)
+	for (UINT tile : GetTileGrid(x, y, 1))
 	{
-		if ((*this)(neighborTile).GetTileState() == TileState::HIDDEN && (*this)(neighborTile).GetTileMark() != TileMark::FLAG)
+		if ((*this)(tile).GetTileState() == TileState::HIDDEN && (*this)(tile).GetTileMark() != TileMark::FLAG)
 		{
-			(*this)(neighborTile).SetTileState(TileState::CLICKED);
+			(*this)(tile).SetTileState(TileState::CLICKED);
 		}
-
-		m_bChording = true;
 	}
+
+	m_bChording = true;
 }
 
+/*
+*	Handles the end of a chording move. Reveals tiles if the 
+*	number of the tiles matches the number of surrounding flags
+*	when chord ends by lifting mouse button.
+*/
 void MinefieldWindow::EndChord(UINT x, UINT y)
 {
 	if ((*this)(x,y).GetTileState() == TileState::REVEALED)
 	{
-		std::vector<UINT> surroundingTiles{ GetTileGrid(x, y, 1, TRUE) };
 		UINT cFlags{ 0 };
 
-		for (UINT neighborTile : surroundingTiles)
+		for (UINT tile : GetTileGrid(x, y, 1))
 		{
-			if ((*this)(neighborTile).GetTileMark() == TileMark::FLAG)
+			if ((*this)(tile).GetTileMark() == TileMark::FLAG)
 			{
 				++cFlags;
 			}
@@ -380,34 +385,64 @@ void MinefieldWindow::EndChord(UINT x, UINT y)
 
 		if (cFlags == GetNumberAdjacentMines(x, y))
 		{
-			for (UINT neighborTile : surroundingTiles)
+			for (UINT tile : GetTileGrid(x, y, 1))
 			{
-				SetTileRevealed(neighborTile % m_width, neighborTile / m_height);
+				SetTileRevealed(tile % m_width, tile / m_height);
 			}
 		}
 		else
 		{
-			for (UINT neighborTile : surroundingTiles)
+			for (UINT tile : GetTileGrid(x, y, 1))
 			{
-				if ((*this)(neighborTile).GetTileState() == TileState::CLICKED)
+				if ((*this)(tile).GetTileState() == TileState::CLICKED)
 				{
-					(*this)(neighborTile).SetTileState(TileState::HIDDEN);
+					(*this)(tile).SetTileState(TileState::HIDDEN);
 				}
 			}
 		}
 	}
 	else
 	{
-		for (UINT neighborTile : GetTileGrid(x, y, 1, TRUE))
+		for (UINT tile : GetTileGrid(x, y, 1))
 		{
-			if ((*this)(neighborTile).GetTileState() == TileState::CLICKED)
+			if ((*this)(tile).GetTileState() == TileState::CLICKED)
 			{
-				(*this)(neighborTile).SetTileState(TileState::HIDDEN);
+				(*this)(tile).SetTileState(TileState::HIDDEN);
 			}
 		}
 	}
 
 	m_bChording = false;
+}
+
+/*
+*	Handles the process of updating tiles when mouse moves
+*	from oldPos to newPos on the field. tileUpdateRadius
+*	sets the radius of tiles to update. forceUpdate causes
+*	an update to field even if oldPos and newPos are equal.
+*/
+void MinefieldWindow::MovePos(POINT oldPos, POINT newPos, UINT tileUpdateRadius, BOOL forceUpdate)
+{
+	if (oldPos.x != newPos.x || oldPos.y != newPos.y || forceUpdate)
+	{
+		for (UINT tile : GetTileGrid(oldPos.x, oldPos.y, tileUpdateRadius))
+		{
+			if ((*this)(tile).GetTileState() == TileState::CLICKED)
+			{
+				(*this)(tile).SetTileState(TileState::HIDDEN);
+			}
+		}
+
+		for (UINT tile : GetTileGrid(newPos.x, newPos.y, tileUpdateRadius))
+		{
+			if ((*this)(tile).GetTileState() == TileState::HIDDEN && (*this)(tile).GetTileMark() != TileMark::FLAG)
+			{
+				(*this)(tile).SetTileState(TileState::CLICKED);
+			}
+		}
+			
+		m_scene.Render();
+	}
 }
 
 /*
@@ -418,7 +453,7 @@ void MinefieldWindow::EndChord(UINT x, UINT y)
 
 LRESULT MinefieldWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 {
-	if (!(IsGameLost() || IsGameWon()))
+	if (IsGameActive())
 	{
 		m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
 		POINT gridPos{ MouseToTilePos(lParam) };
@@ -443,7 +478,7 @@ LRESULT MinefieldWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 {
-	if (!(IsGameLost() || IsGameWon()))
+	if (IsGameActive())
 	{
 		POINT gridPos{ MouseToTilePos(lParam) };
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
@@ -452,9 +487,9 @@ LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 		{
 			EndChord(gridPos.x, gridPos.y);
 			m_scene.Render();
+			m_bChordDisableLRMouse = TRUE;
 		}
-
-		if (tile->GetTileState() == TileState::CLICKED)
+		else if (tile->GetTileState() == TileState::CLICKED)
 		{
 			if (m_cRevealedTiles == 0)
 			{
@@ -486,7 +521,7 @@ LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 {
-	if (!(IsGameLost() || IsGameWon()))
+	if (IsGameActive())
 	{
 		POINT gridPos{ MouseToTilePos(lParam) };
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
@@ -495,6 +530,7 @@ LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 		{
 			BeginChord(gridPos.x, gridPos.y);
 			m_scene.Render();
+			m_bChordDisableLRMouse = TRUE;
 		}
 		else if (tile->GetTileState() == TileState::HIDDEN)
 		{
@@ -530,7 +566,7 @@ LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam)
 {
-	if (!(IsGameLost() || IsGameWon()))
+	if (IsGameActive())
 	{
 		POINT gridPos{ MouseToTilePos(lParam) };
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
@@ -550,6 +586,8 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 	if (!m_bMouseTracking)
 	{
 		TRACKMOUSEEVENT tme;
+		POINT gridPos{ MouseToTilePos(lParam) };
+
 		tme.cbSize = sizeof(TRACKMOUSEEVENT);
 		tme.dwFlags = TME_LEAVE;
 		tme.hwndTrack = m_hWnd;
@@ -559,48 +597,49 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 			m_bMouseTracking = TRUE;
 		}
 
-		if (wParam & MK_LBUTTON)
-		{
-			POINT gridPos{ MouseToTilePos(lParam) };
-			m_lastGridPos = gridPos;
-			MineTile* tile = &(*this)(gridPos.x, gridPos.y);
-
-			if (tile->GetTileState() == TileState::HIDDEN && tile->GetTileMark() != TileMark::FLAG)
-			{
-				tile->SetTileState(TileState::CLICKED);
-				m_scene.Render();
-			}
-		}
-	}
-	else
-	{
-		if (!(IsGameLost() || IsGameWon()))
+		if (IsGameActive())
 		{
 			if (wParam & MK_LBUTTON)
 			{
 				m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
 
-				POINT gridPos{ MouseToTilePos(lParam) };
-
-				if (gridPos.x != m_lastGridPos.x || gridPos.y != m_lastGridPos.y)
+				if (wParam & MK_RBUTTON)
 				{
-					MineTile* prevTile = &(*this)(m_lastGridPos.x, m_lastGridPos.y);
-					MineTile* curTile = &(*this)(gridPos.x, gridPos.y);
+					MovePos(m_lastGridPos, gridPos, 1, TRUE);
+				}
+				else
+				{
+					MovePos(m_lastGridPos, gridPos, 0, TRUE);
+				}
 
-					if (prevTile->GetTileState() == TileState::CLICKED)
-					{
-						prevTile->SetTileState(TileState::HIDDEN);
-					}
+				m_bChording = static_cast<BOOL>((wParam & MK_LBUTTON) && (wParam & MK_RBUTTON));
+			}		
 
-					if (curTile->GetTileState() == TileState::HIDDEN && curTile->GetTileMark() != TileMark::FLAG)
-					{
-						curTile->SetTileState(TileState::CLICKED);
-					}
+			m_lastGridPos = gridPos;
+		}
+		
+	}
+	else
+	{
+		if (IsGameActive())
+		{
+			POINT gridPos{ MouseToTilePos(lParam) };
 
-					m_scene.Render();
-					m_lastGridPos = gridPos;
+			if (wParam & MK_LBUTTON)
+			{
+				m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
+
+				if (m_bChording)
+				{
+					MovePos(m_lastGridPos, gridPos, 1, FALSE);
+				}
+				else
+				{
+					MovePos(m_lastGridPos, gridPos, 0, FALSE);
 				}
 			}
+
+			m_lastGridPos = gridPos;
 		}
 	}
 
@@ -609,15 +648,18 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 {
-	if (!(IsGameLost() || IsGameWon()))
+	if (IsGameActive())
 	{
 		m_pGameWindow->SetSmileState(SmileState::SMILE);
 		MineTile* tile = &(*this)(m_lastGridPos.x, m_lastGridPos.y);
 
-		if (tile->GetTileState() == TileState::CLICKED)
+		for (UINT tile : GetTileGrid(m_lastGridPos.x, m_lastGridPos.y, m_bChording ? 1 : 0))
 		{
-			tile->SetTileState(TileState::HIDDEN);
-			m_scene.Render();
+			if ((*this)(tile).GetTileState() == TileState::CLICKED)
+			{
+				(*this)(tile).SetTileState(TileState::HIDDEN);
+				m_scene.Render();
+			}
 		}
 	}
 

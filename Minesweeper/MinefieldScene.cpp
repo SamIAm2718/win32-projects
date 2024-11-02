@@ -435,7 +435,9 @@ void MinefieldScene::DrawTileContents(const MineTile& tile)
 			{
 			case TileMark::NONE:
 				if (m_pMinefield->IsGameWon() && tile.GetTileContent() == TileContent::MINE)
+				{
 					m_pRenderTarget->DrawBitmap(m_pFlagBitmap, tile.GetDrawRect());
+				}
 				break;
 			case::TileMark::FLAG:
 				m_pRenderTarget->DrawBitmap(m_pFlagBitmap, tile.GetDrawRect());

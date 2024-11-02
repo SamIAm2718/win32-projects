@@ -18,13 +18,13 @@ class MinefieldWindow : public BaseWindow<MinefieldWindow>
 public:
 	MinefieldWindow(UINT width, UINT height, UINT cMines);
 
-	
 	UINT GetMinefieldWidth() const;							// Returns the width of the Minefield.
 	UINT GetMinefieldHeight() const;						// Returns the height of the Minefield.
 	UINT GetMinefieldSize() const;							// Returns the number of tiles in the Minefield
 
 	BOOL IsGameLost() const;								// Returns if the game is lost.
 	BOOL IsGameWon() const;									// Returns if the game is won.
+	BOOL IsGameActive() const;								// Returns if game is active or not.
 	BOOL Resize(UINT width, UINT height, UINT cMines);		// Resizes the Minefield to width x height with cMines mines.
 
 	MineTile& operator()(UINT index);						// Get tile from tile array at a given index.
@@ -45,6 +45,7 @@ private:
 	POINT m_lastGridPos{};									// Tracks the previous position of the mouse on tile grid.
 	BOOL m_bMouseTracking{ FALSE };							// Tracks if mouse is being tracked.
 	BOOL m_bChording{ FALSE };								// Tracks if player is currently chording.
+	BOOL m_bChordDisableLRMouse{ FALSE };					// Disables LR input after chording ends.
 	BOOL m_bGameLost{ FALSE };								// Tracks if game is lost, i.e. a mine was revealed.
 	BOOL m_bQuestionMarksEnabled{ FALSE };					// Tracks if we can mark with question marks.
 	RNG m_rng{};											// The RNG used for generating mine positions.
@@ -52,13 +53,14 @@ private:
 	std::vector<MineTile> m_aMineTiles{};					// Vector holding tiles in the grid.
 
 	UINT GetNumberAdjacentMines(UINT x, UINT y);
-	std::vector<UINT> GetTileGrid(UINT x, UINT y, INT radius, BOOL excludeCenter);
+	std::vector<UINT> GetTileGrid(UINT x, UINT y, INT radius);
 	POINT MouseToTilePos(LPARAM lParam);
 	void GenerateMines(UINT x, UINT y);
 	void GenerateNumbers();
 	void SetTileRevealed(UINT x, UINT y);
 	void BeginChord(UINT x, UINT y);
 	void EndChord(UINT x, UINT y);
+	void MovePos(POINT oldPos, POINT newPos, UINT tileUpdateRadius, BOOL forceUpdate);
 
 	// Functions that handle different user inputs.
 	LRESULT OnLButtonDown(WPARAM wParam, LPARAM lParam);
