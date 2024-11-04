@@ -659,9 +659,10 @@ LRESULT MinefieldWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 			if ((*this)(tile).GetTileState() == TileState::CLICKED)
 			{
 				(*this)(tile).SetTileState(TileState::HIDDEN);
-				m_scene.Render();
 			}
 		}
+
+		m_scene.Render();
 	}
 
 	m_bMouseTracking = FALSE;
