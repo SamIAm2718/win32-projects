@@ -353,6 +353,8 @@ void MinefieldWindow::SetTileRevealed(UINT x, UINT y)
 // Handles beginning to chord at a position (x,y) on the minefield.
 void MinefieldWindow::BeginChord(UINT x, UINT y)
 {
+	m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
+
 	for (UINT tile : GetTileGrid(x, y, 1))
 	{
 		if ((*this)(tile).GetTileState() == TileState::HIDDEN && (*this)(tile).GetTileMark() != TileMark::FLAG)
@@ -371,6 +373,8 @@ void MinefieldWindow::BeginChord(UINT x, UINT y)
 */
 void MinefieldWindow::EndChord(UINT x, UINT y)
 {
+	m_pGameWindow->SetSmileState(SmileState::SMILE);
+
 	if ((*this)(x,y).GetTileState() == TileState::REVEALED)
 	{
 		UINT cFlags{ 0 };
@@ -388,6 +392,18 @@ void MinefieldWindow::EndChord(UINT x, UINT y)
 			for (UINT tile : GetTileGrid(x, y, 1))
 			{
 				SetTileRevealed(tile % m_width, tile / m_width);
+			}
+
+			if (IsGameLost())
+			{
+				m_pGameWindow->StopTimer();
+				m_pGameWindow->SetSmileState(SmileState::SMILE_DEAD);
+			}
+			else if (IsGameWon())
+			{
+				m_pGameWindow->StopTimer();
+				m_pGameWindow->SetFlagCounter(0);
+				m_pGameWindow->SetSmileState(SmileState::SMILE_SUNGLASSES);
 			}
 		}
 		else
@@ -453,22 +469,20 @@ void MinefieldWindow::MovePos(POINT oldPos, POINT newPos, UINT tileUpdateRadius,
 
 LRESULT MinefieldWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 {
-	if (IsGameActive())
+	if (IsGameActive() && !(wParam & MK_MBUTTON) && !m_bLRHeldAfterChord)
 	{
 		m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
 		POINT gridPos{ MouseToTilePos(lParam) };
-		m_lastGridPos = gridPos;
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
-
-		if (tile->GetTileState() == TileState::HIDDEN && tile->GetTileMark() != TileMark::FLAG)
-		{
-			tile->SetTileState(TileState::CLICKED);
-			m_scene.Render();
-		}
 
 		if (wParam & MK_RBUTTON)
 		{
 			BeginChord(gridPos.x, gridPos.y);
+			m_scene.Render();
+		}
+		else if (tile->GetTileState() == TileState::HIDDEN && tile->GetTileMark() != TileMark::FLAG)
+		{
+			tile->SetTileState(TileState::CLICKED);
 			m_scene.Render();
 		}
 	}
@@ -478,7 +492,7 @@ LRESULT MinefieldWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 {
-	if (IsGameActive())
+	if (IsGameActive() && !(wParam & MK_MBUTTON) && !m_bLRHeldAfterChord)
 	{
 		POINT gridPos{ MouseToTilePos(lParam) };
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
@@ -487,7 +501,7 @@ LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 		{
 			EndChord(gridPos.x, gridPos.y);
 			m_scene.Render();
-			m_bChordDisableLRMouse = TRUE;
+			m_bLRHeldAfterChord = TRUE;
 		}
 		else if (tile->GetTileState() == TileState::CLICKED)
 		{
@@ -499,21 +513,28 @@ LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 
 			SetTileRevealed(gridPos.x, gridPos.y);
 			m_scene.Render();
+
+			if (IsGameLost())
+			{
+				m_pGameWindow->StopTimer();
+				m_pGameWindow->SetSmileState(SmileState::SMILE_DEAD);
+			}
+			else if (IsGameWon())
+			{
+				m_pGameWindow->StopTimer();
+				m_pGameWindow->SetFlagCounter(0);
+				m_pGameWindow->SetSmileState(SmileState::SMILE_SUNGLASSES);
+			}
 		}
 
-		m_pGameWindow->SetSmileState(SmileState::SMILE);
-
-		if (IsGameLost())
+		if (IsGameActive())
 		{
-			m_pGameWindow->StopTimer();
-			m_pGameWindow->SetSmileState(SmileState::SMILE_DEAD);
+			m_pGameWindow->SetSmileState(SmileState::SMILE);
 		}
-		else if (IsGameWon())
-		{
-			m_pGameWindow->StopTimer();
-			m_pGameWindow->SetFlagCounter(0);
-			m_pGameWindow->SetSmileState(SmileState::SMILE_SUNGLASSES);
-		}
+	}
+	else if (m_bLRHeldAfterChord && !(wParam & MK_RBUTTON))
+	{
+		m_bLRHeldAfterChord = FALSE;
 	}
 
 	return 0;
@@ -521,7 +542,7 @@ LRESULT MinefieldWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 {
-	if (IsGameActive())
+	if (IsGameActive() && !(wParam & MK_MBUTTON) && !m_bLRHeldAfterChord)
 	{
 		POINT gridPos{ MouseToTilePos(lParam) };
 		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
@@ -530,7 +551,6 @@ LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 		{
 			BeginChord(gridPos.x, gridPos.y);
 			m_scene.Render();
-			m_bChordDisableLRMouse = TRUE;
 		}
 		else if (tile->GetTileState() == TileState::HIDDEN)
 		{
@@ -566,13 +586,52 @@ LRESULT MinefieldWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam)
 
 LRESULT MinefieldWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam)
 {
-	if (IsGameActive())
+	if (IsGameActive() && !(wParam & MK_MBUTTON) && !m_bLRHeldAfterChord)
 	{
 		POINT gridPos{ MouseToTilePos(lParam) };
-		MineTile* tile = &(*this)(gridPos.x, gridPos.y);
 
 		if (m_bChording)
 		{
+			EndChord(gridPos.x, gridPos.y);
+			m_scene.Render();
+			m_bLRHeldAfterChord = TRUE;
+		}
+	}
+	else if(m_bLRHeldAfterChord && !(wParam & MK_LBUTTON))
+	{
+		m_bLRHeldAfterChord = FALSE;
+	}
+
+	return 0;
+}
+
+LRESULT MinefieldWindow::OnMButtonDown(WPARAM wParam, LPARAM lParam)
+{
+	if (IsGameActive() && !m_bChording)
+	{
+		if (!m_bChording)
+		{
+			POINT gridPos{ MouseToTilePos(lParam) };
+			BeginChord(gridPos.x, gridPos.y);
+			m_scene.Render();
+		}
+	}
+
+	return 0;
+}
+
+LRESULT MinefieldWindow::OnMButtonUp(WPARAM wParam, LPARAM lParam)
+{
+	if (IsGameActive())
+	{
+		if (m_bChording)
+		{
+			if ((wParam & MK_LBUTTON) || (wParam & MK_RBUTTON))
+			{
+				m_bLRHeldAfterChord = TRUE;
+			}
+
+			POINT gridPos{ MouseToTilePos(lParam) };
 			EndChord(gridPos.x, gridPos.y);
 			m_scene.Render();
 		}
@@ -600,11 +659,11 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 
 		if (IsGameActive())
 		{
-			if (wParam & MK_LBUTTON)
+			if (wParam & MK_LBUTTON || (wParam & MK_MBUTTON))
 			{
 				m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
 
-				if (wParam & MK_RBUTTON)
+				if (wParam & MK_RBUTTON || (wParam & MK_MBUTTON))
 				{
 					MovePos(m_lastGridPos, gridPos, 1, TRUE);
 				}
@@ -613,26 +672,23 @@ LRESULT MinefieldWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 					MovePos(m_lastGridPos, gridPos, 0, TRUE);
 				}
 
-				m_bChording = static_cast<BOOL>((wParam & MK_LBUTTON) && (wParam & MK_RBUTTON));
+				m_bChording = static_cast<BOOL>((wParam & MK_LBUTTON) && (wParam & MK_RBUTTON) || (wParam & MK_MBUTTON));
 			}		
 
 			m_lastGridPos = gridPos;
 		}
-		
 	}
 	else
 	{
 		if (IsGameActive())
 		{
-			if (wParam & MK_LBUTTON)
+			if ((wParam & MK_LBUTTON) || (wParam & MK_MBUTTON))
 			{
-				m_pGameWindow->SetSmileState(SmileState::SMILE_OPEN_MOUTH);
-
 				if (m_bChording)
 				{
 					MovePos(m_lastGridPos, gridPos, 1, FALSE);
 				}
-				else
+				else if(!m_bLRHeldAfterChord)
 				{
 					MovePos(m_lastGridPos, gridPos, 0, FALSE);
 				}
@@ -665,6 +721,7 @@ LRESULT MinefieldWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 		m_scene.Render();
 	}
 
+	m_bLRHeldAfterChord = FALSE;
 	m_bMouseTracking = FALSE;
 	m_pGameWindow->SetCurrentTileContents(TileContent::EMPTY);
 
@@ -734,6 +791,12 @@ LRESULT MinefieldWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_RBUTTONUP:
 		return OnRButtonUp(wParam, lParam);
+
+	case WM_MBUTTONDOWN:
+		return OnMButtonDown(wParam, lParam);
+
+	case WM_MBUTTONUP:
+		return OnMButtonUp(wParam, lParam);
 
 	case WM_MOUSEMOVE:
 		return OnMouseMove(wParam, lParam);

@@ -45,7 +45,7 @@ private:
 	POINT m_lastGridPos{};									// Tracks the previous position of the mouse on tile grid.
 	BOOL m_bMouseTracking{ FALSE };							// Tracks if mouse is being tracked.
 	BOOL m_bChording{ FALSE };								// Tracks if player is currently chording.
-	BOOL m_bChordDisableLRMouse{ FALSE };					// Disables LR input after chording ends.
+	BOOL m_bLRHeldAfterChord{ FALSE };						// Tracks if player is still holding L or R mouse button after chord
 	BOOL m_bGameLost{ FALSE };								// Tracks if game is lost, i.e. a mine was revealed.
 	BOOL m_bQuestionMarksEnabled{ FALSE };					// Tracks if we can mark with question marks.
 	RNG m_rng{};											// The RNG used for generating mine positions.
@@ -67,6 +67,8 @@ private:
 	LRESULT OnLButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnRButtonDown(WPARAM wParam, LPARAM lParam);
 	LRESULT OnRButtonUp(WPARAM wParam, LPARAM lParam);
+	LRESULT OnMButtonDown(WPARAM wParam, LPARAM lParam);
+	LRESULT OnMButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseLeave(WPARAM wParam, LPARAM lParam);
 
